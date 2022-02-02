@@ -19,7 +19,7 @@
             例: に■■あい -> に..あい
           </li>
           <li>
-            例: 「あ」と「い」が含まれる -> [あい].*[あい]
+            例: 「あ」と「い」が含まれる -> (?=.*あ)(?=.*い)
           </li>
           <li>
             GitHubリポジトリは<a href="https://github.com/kjranyone/wordle-ja-cheat" target="_blank">ここ</a>

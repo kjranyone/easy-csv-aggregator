@@ -16,6 +16,9 @@
           <li>
             例: 「あ」と「い」が含まれる -> [あい].*[あい]
           </li>
+          <li>
+            GitHubリポジトリは<a href="https://github.com/kjranyone/wordle-ja-cheat" target="_blank">ここ</a>
+          </li>
         </ul>
         <v-text-field label="正規表現で検索文字列を入力" v-model="searchString" @keydown.enter.prevent="search"></v-text-field>
         <v-text-field type="number" label="文字数(0で無視)" v-model="stringNumber" @keydown.enter.prevent="search"></v-text-field>

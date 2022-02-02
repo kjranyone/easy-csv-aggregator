@@ -7,8 +7,13 @@
         <h1>wordleチート（日本語版）</h1>
         <ul>
           <li>
-            <a href="http://www17408ui.sakura.ne.jp/tatsum/index.html" target="_blank">松下言語学習ラボ</a>の「重要度順語彙データベース (Top
-            60894)」から、4文字～7文字の単語に関してリスト化しています。
+            本サイトは日本語語彙力の強化を目的として頭に浮かばない日本語を部分的なワードから正規表現を用いてリストアップするための教育ツールです。
+          </li>
+          <li>
+            松下達彦(2011)「日本語を読むための語彙データベース（VDRJ） Ver. 1.0 （研究用）」(2022年2月2日) <a href="http://www17408ui.sakura.ne.jp/tatsum/index.html" target="_blank">http://www17408ui.sakura.ne.jp/tatsum/index.html</a>
+          </li>
+          <li>
+            上記データベースより3文字以下の語彙を除外したデータを利用しています
           </li>
           <li>
             例: に■■あい -> に..あい

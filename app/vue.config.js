@@ -1,4 +1,5 @@
 module.exports = {
+  publicPath: '/wordle-ja-cheat/',
   transpileDependencies: [
     'vuetify'
   ],

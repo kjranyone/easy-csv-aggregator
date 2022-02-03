@@ -43,8 +43,8 @@
                   type="number" label="文字数" v-model="modeSimple.stringNumber"
                   @input="simpleStringNumberChanged"
                   @keydown.enter.prevent="searchSimple"/>
-              <v-row>
-                <v-col cols="1" v-for="(item, index) in modeSimple.specificIndexStrings" :key="index">
+              <v-row justify="center">
+                <v-col class="center-input-col" v-for="(item, index) in modeSimple.specificIndexStrings" :key="index">
                   <v-text-field
                       height="40"
                       class="center-input"
@@ -204,11 +204,3 @@ export default {
   }
 };
 </script>
-<style>
-.center-input input {
-  color: #ffffff !important;
-  font-weight: bold;
-  font-size: 1.4rem;
-  text-align: center;
-}
-</style>

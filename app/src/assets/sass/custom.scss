@@ -4,9 +4,21 @@
   margin: 20px auto 0;
 }
 
+.v-tabs-items {
+  padding-top: 15px;
+}
+
+.v-text-field {
+  padding-top: 0 !important;
+}
+
+.row + .row {
+  margin-top: -24px !important;
+}
+
 .center-input-col {
   max-width: 48px !important;
-  padding: 4px!important;
+  padding: 4px !important;
 }
 
 .center-input input {

@@ -43,21 +43,38 @@
                   type="number" label="文字数" v-model="modeSimple.stringNumber"
                   @input="simpleStringNumberChanged"
                   @keydown.enter.prevent="searchSimple"/>
+              <p class="text-center"><small>確定文字</small></p>
               <v-row justify="center">
                 <v-col class="center-input-col" v-for="(item, index) in modeSimple.specificIndexStrings" :key="index">
                   <v-text-field
                       height="40"
                       class="center-input"
-                      :background-color="modeSimple.specificIndexStrings[index] ? '#6aaa64' : '#787c7e'"
+                      :background-color="item ? '#6aaa64' : '#787c7e'"
                       @keydown.enter.prevent="searchSimple"
                       v-model="modeSimple.specificIndexStrings[index]"
                   ></v-text-field>
                 </v-col>
               </v-row>
-              <v-text-field label="位置が確定していない文字" v-model="modeSimple.containString"
+              <p class="text-center"><small>位置が確定していない文字</small></p>
+              <v-row justify="center" v-for="(item, index) in modeSimple.negativeIndexStringsArray" :key="index">
+                <v-col class="center-input-col" v-for="(item2, index2) in modeSimple.negativeIndexStringsArray[index]"
+                       :key="index2">
+                  <v-text-field
+                      height="40"
+                      class="center-input"
+                      :background-color="modeSimple.negativeIndexStringsArray[index][index2] ? '#b59f3b' : '#787c7e'"
+                      @keydown.enter.prevent="searchSimple"
+                      v-model="modeSimple.negativeIndexStringsArray[index][index2]"
+                  ></v-text-field>
+                </v-col>
+              </v-row>
+              <p class="text-center"><small>ハズレの文字</small></p>
+              <v-text-field label="含まれない文字列を入力" v-model="modeSimple.negativeString"
                             @keydown.enter.prevent="searchSimple"></v-text-field>
-              <v-btn color="primary" @click="searchSimple">検索</v-btn>
-              <v-btn @click="clearSimple">入力をクリア</v-btn>
+              <p class="text-center">
+                <v-btn color="primary" @click="searchSimple">検索</v-btn>
+                <v-btn @click="clearSimple">入力をクリア</v-btn>
+              </p>
             </template>
             <template v-else-if="item==='正規表現を使う'">
               <v-text-field label="正規表現で検索文字列を入力" v-model="modeRegex.searchString"
@@ -145,7 +162,8 @@ export default {
       modeSimple: {
         stringNumber: simpleStringNumber,
         specificIndexStrings: arr,
-        containString: ""
+        negativeIndexStringsArray: [arr.concat(), arr.concat()],
+        negativeString: "",
       },
       modeRegex: {
         stringNumber: 0,
@@ -158,30 +176,44 @@ export default {
       let arr = [];
       arr.length = this.modeSimple.stringNumber;
       this.modeSimple.specificIndexStrings = arr;
+      this.modeSimple.negativeIndexStringsArray = [arr.concat(), arr.concat()]
     },
     clearSimple() {
       // 入力文字をクリア
       let arr = [];
       arr.length = this.modeSimple.stringNumber;
       this.modeSimple.specificIndexStrings = arr;
-      this.modeSimple.containString = "";
+      this.modeSimple.negativeIndexStringsArray = [arr.concat(), arr.concat()]
+      this.modeSimple.negativeString = "";
     },
     searchSimple() {
       // build regex string
       let patternString = "";
       let specificIndexPattern = "";
       for (let i = 0; i < this.modeSimple.specificIndexStrings.length; i++) {
-        if (this.modeSimple.specificIndexStrings[i] && this.modeSimple.specificIndexStrings[i].length === 1) {
-          specificIndexPattern += this.modeSimple.specificIndexStrings[i];
-        } else {
-          specificIndexPattern += ".";
-        }
+        specificIndexPattern += this.modeSimple.specificIndexStrings[i] &&
+        this.modeSimple.specificIndexStrings[i].length === 1 ? this.modeSimple.specificIndexStrings[i] : ".";
       }
       patternString += "(?=" + specificIndexPattern + ")"
-      for (let i = 0; i < this.modeSimple.containString.length; i++) {
-        patternString += "(?=.*" + this.modeSimple.containString[i] + ")"
+
+      // negativeIndexStrings
+      this.modeSimple.negativeIndexStringsArray.forEach(nIStrings => {
+        for (let i = 0; i < nIStrings.length; i++) {
+          if (nIStrings[i] && nIStrings[i].length === 1) {
+            // その位置には存在しない
+            patternString += "(?!" + ".".repeat(i) + nIStrings[i] + ".".repeat(nIStrings.length - (i + 1)) + ")";
+            // ただしどこかに存在する
+            patternString += "(?=.*" + nIStrings[i] + ")"
+          }
+        }
+      });
+
+      //negativeString
+      if (this.modeSimple.negativeString.length > 0) {
+        patternString += "(?!.*[" + this.modeSimple.negativeString + "])";
       }
 
+      console.log('patternString: ' + patternString);
       this.execSearch(this.modeSimple.stringNumber, new RegExp(patternString, "g"));
     },
     searchRegex() {
@@ -190,7 +222,7 @@ export default {
     execSearch(stringNumber, pattern) {
       let results = [];
       this.wordsJson.words.forEach(word => {
-        if ((parseInt(this.modeRegex.stringNumber) === 0 || word[2].length === parseInt(this.modeRegex.stringNumber)) && pattern.test(word[2])) {
+        if ((parseInt(stringNumber) === 0 || word[2].length === parseInt(stringNumber)) && pattern.test(word[2])) {
           results.push({
             "word": word[0],
             "common": word[1],

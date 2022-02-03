@@ -5,7 +5,7 @@
           elevation="2"
       >
         <h1>wordleチート（日本語版）<small>(<a href="https://github.com/kjranyone/wordle-ja-cheat"
-                                        target="_blank">GitHub</a>)</small></h1>
+                                      target="_blank">GitHub</a>)</small></h1>
         <ul>
           <li>
             本サイトは日本語語彙力の強化を目的として頭に浮かばない日本語を部分的なワードから正規表現を用いてリストアップするための教育ツールです。
@@ -19,20 +19,20 @@
           </li>
         </ul>
 
-          <v-tabs
-              v-model="searchTab"
-              fixed-tabs
-              background-color="indigo"
-              dark
+        <v-tabs
+            v-model="searchTab"
+            fixed-tabs
+            background-color="indigo"
+            dark
+        >
+          <v-tabs-slider color="yellow"></v-tabs-slider>
+          <v-tab
+              v-for="item in searchItems"
+              :key="item"
           >
-            <v-tabs-slider color="yellow"></v-tabs-slider>
-            <v-tab
-                v-for="item in searchItems"
-                :key="item"
-            >
-              {{ item }}
-            </v-tab>
-          </v-tabs>
+            {{ item }}
+          </v-tab>
+        </v-tabs>
         <v-tabs-items v-model="searchTab">
           <v-tab-item
               v-for="item in searchItems"
@@ -56,7 +56,8 @@
               </v-row>
               <v-text-field label="位置が確定していない文字" v-model="modeSimple.containString"
                             @keydown.enter.prevent="searchSimple"></v-text-field>
-              <v-btn @click="searchSimple">検索</v-btn>
+              <v-btn color="primary" @click="searchSimple">検索</v-btn>
+              <v-btn @click="clearSimple">入力をクリア</v-btn>
             </template>
             <template v-else-if="item==='正規表現を使う'">
               <v-text-field label="正規表現で検索文字列を入力" v-model="modeRegex.searchString"
@@ -72,6 +73,7 @@
 
       <v-card
           elevation="2"
+          id="result-card"
       >
         <h3>検索結果</h3>
         <p v-text="resultMessage"></p>
@@ -103,22 +105,30 @@
           </template>
         </v-simple-table>
       </v-card>
+      <v-btn
+          v-scroll="onScroll"
+          v-show="fab"
+          fab
+          dark
+          fixed
+          bottom
+          right
+          color="primary"
+          @click="$vuetify.goTo(0)"
+      >
+        <v-icon>mdi-chevron-up</v-icon>
+      </v-btn>
     </v-main>
   </v-app>
 </template>
 
 <script>
 require('@/assets/sass/custom.scss');
-import wordsJson from '@/assets/json/words.json'
-// import HelloWorld from './components/HelloWorld';
+import wordsJson from '@/assets/json/words.json';
 
 export default {
   name: 'App',
-
-  components: {
-    // HelloWorld,
-  },
-
+  components: {},
   data() {
     let arr = [];
     let simpleStringNumber = 5;
@@ -127,6 +137,7 @@ export default {
       wordsJson: wordsJson,
       results: [],
       resultMessage: "",
+      fab: false,
       searchTab: null,
       searchItems: [
         'かんたん検索', '正規表現を使う',
@@ -144,15 +155,18 @@ export default {
   },
   methods: {
     simpleStringNumberChanged() {
-      console.log("simpleStringNumberChanged");
       let arr = [];
       arr.length = this.modeSimple.stringNumber;
       this.modeSimple.specificIndexStrings = arr;
     },
+    clearSimple() {
+      // 入力文字をクリア
+      let arr = [];
+      arr.length = this.modeSimple.stringNumber;
+      this.modeSimple.specificIndexStrings = arr;
+      this.modeSimple.containString = "";
+    },
     searchSimple() {
-      console.log("検索開始");
-      // (?=...てい)(?=.*っ)(?=.*し)
-      // 確定文字
       // specificIndexStrings
       let patternString = "";
       let specificIndexPattern = "";
@@ -183,6 +197,12 @@ export default {
       })
       this.resultMessage = "検索完了。" + this.wordsJson.words.length + "単語中" + results.length + "単語がマッチしました。";
       this.results = results;
+      this.$nextTick(function () {
+        document.querySelector('#result-card').scrollIntoView({
+          behavior: 'smooth',
+          inline: 'nearest',
+        });
+      })
     },
     searchRegex() {
       console.log("検索を行います。環境によっては結果が出るまで遅いかも。キーワード: " + this.modeRegex.searchString);
@@ -200,6 +220,17 @@ export default {
       this.resultMessage = "検索完了。" + this.wordsJson.words.length + "単語中" + results.length + "単語がマッチしました。";
       console.log(this.resultMessage);
       this.results = results;
+      this.$nextTick(function () {
+        document.querySelector('#result-card').scrollIntoView({
+          behavior: 'smooth',
+          inline: 'nearest',
+        });
+      })
+    },
+    onScroll(e) {
+      if (typeof window === 'undefined') return
+      const top = window.scrollY || e.target.scrollTop || 0
+      this.fab = top > 20
     }
   }
 };

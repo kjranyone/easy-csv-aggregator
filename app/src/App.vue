@@ -167,7 +167,7 @@ export default {
       this.modeSimple.containString = "";
     },
     searchSimple() {
-      // specificIndexStrings
+      // build regex string
       let patternString = "";
       let specificIndexPattern = "";
       for (let i = 0; i < this.modeSimple.specificIndexStrings.length; i++) {
@@ -178,36 +178,17 @@ export default {
         }
       }
       patternString += "(?=" + specificIndexPattern + ")"
-
-      // containString
       for (let i = 0; i < this.modeSimple.containString.length; i++) {
         patternString += "(?=.*" + this.modeSimple.containString[i] + ")"
       }
 
-      let results = []
-      let pattern = new RegExp(patternString, "g");
-      this.wordsJson.words.forEach(word => {
-        if ((parseInt(this.modeSimple.stringNumber) === 0 || word[2].length === parseInt(this.modeSimple.stringNumber)) && pattern.test(word[2])) {
-          results.push({
-            "word": word[0],
-            "common": word[1],
-            "kana": word[2]
-          })
-        }
-      })
-      this.resultMessage = "検索完了。" + this.wordsJson.words.length + "単語中" + results.length + "単語がマッチしました。";
-      this.results = results;
-      this.$nextTick(function () {
-        document.querySelector('#result-card').scrollIntoView({
-          behavior: 'smooth',
-          inline: 'nearest',
-        });
-      })
+      this.execSearch(this.modeSimple.stringNumber, new RegExp(patternString, "g"));
     },
     searchRegex() {
-      console.log("検索を行います。環境によっては結果が出るまで遅いかも。キーワード: " + this.modeRegex.searchString);
-      let results = []
-      let pattern = new RegExp(this.modeRegex.searchString, "g")
+      this.execSearch(this.modeRegex.stringNumber, new RegExp(this.modeRegex.searchString, "g"));
+    },
+    execSearch(stringNumber, pattern) {
+      let results = [];
       this.wordsJson.words.forEach(word => {
         if ((parseInt(this.modeRegex.stringNumber) === 0 || word[2].length === parseInt(this.modeRegex.stringNumber)) && pattern.test(word[2])) {
           results.push({
@@ -218,7 +199,6 @@ export default {
         }
       })
       this.resultMessage = "検索完了。" + this.wordsJson.words.length + "単語中" + results.length + "単語がマッチしました。";
-      console.log(this.resultMessage);
       this.results = results;
       this.$nextTick(function () {
         document.querySelector('#result-card').scrollIntoView({

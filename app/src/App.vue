@@ -4,20 +4,8 @@
       <v-card
           elevation="2"
       >
-        <h1>wordleチート（日本語版）<small>(<a href="https://github.com/kjranyone/wordle-ja-cheat"
-                                      target="_blank">GitHub</a>)</small></h1>
-        <ul>
-          <li>
-            本サイトは日本語語彙力の強化を目的として頭に浮かばない日本語を部分的なワードから正規表現を用いてリストアップするための教育ツールです。
-          </li>
-          <li>
-            松下達彦(2011)「日本語を読むための語彙データベース（VDRJ） Ver. 1.0 （研究用）」(2022年2月2日) <a
-              href="http://www17408ui.sakura.ne.jp/tatsum/index.html" target="_blank">http://www17408ui.sakura.ne.jp/tatsum/index.html</a>
-          </li>
-          <li>
-            上記データベースより3文字以下の語彙を除外したデータを利用しています
-          </li>
-        </ul>
+        <h1>Easy Csv Aggregator<small>(<a href="https://github.com/kjranyone/easy-csv-aggregator"
+                                          target="_blank">GitHub</a>)</small></h1>
 
         <v-tabs
             v-model="searchTab"
@@ -38,90 +26,117 @@
               v-for="item in searchItems"
               :key="item"
           >
-            <template v-if="item==='かんたん検索'">
-              <v-text-field
-                  type="number" label="文字数" v-model="modeSimple.stringNumber"
-                  @input="simpleStringNumberChanged"
-                  @keydown.enter.prevent="searchSimple"/>
-              <p class="text-center"><small>確定文字</small></p>
-              <v-row justify="center">
-                <v-col class="center-input-col" v-for="(item, index) in modeSimple.specificIndexStrings" :key="index">
-                  <v-text-field
-                      height="40"
-                      class="center-input"
-                      :background-color="item ? '#6aaa64' : '#787c7e'"
-                      @keydown.enter.prevent="searchSimple"
-                      v-model="modeSimple.specificIndexStrings[index]"
-                  ></v-text-field>
-                </v-col>
+            <v-container v-if="item===searchItems[0]">
+              <v-row
+                  class="text-center"
+                  @dragover.prevent
+                  @dragenter="onDragEnter"
+                  @dragleave="onDragLeave"
+                  @drop="onDrop"
+              >
+                <v-file-input
+                    v-model="files"
+                    color="deep-purple accent-4"
+                    counter
+                    label="File input"
+                    multiple
+                    placeholder="Select your files"
+                    prepend-icon="mdi-paperclip"
+                    outlined
+                    accept=".csv"
+                    :show-size="1000"
+                    :background-color="isDragging ? 'blue' : 'null'"
+                    @change="applyChanges"
+                >
+                  <template v-slot:selection="{ index, text }">
+                    <v-chip v-if="index < 2" color="deep-purple accent-4" dark label small>{{ text }}</v-chip>
+                    <span
+                        v-else-if="index === 2"
+                        class="overline grey--text text--darken-3 mx-2"
+                    >+{{ files.length - 2 }} File(s)</span>
+                  </template>
+                </v-file-input>
               </v-row>
-              <p class="text-center"><small>位置が確定していない文字</small></p>
-              <v-row justify="center" v-for="(item, index) in modeSimple.negativeIndexStringsArray" :key="index">
-                <v-col class="center-input-col" v-for="(item2, index2) in modeSimple.negativeIndexStringsArray[index]"
-                       :key="index2">
-                  <v-text-field
-                      height="40"
-                      class="center-input"
-                      :background-color="modeSimple.negativeIndexStringsArray[index][index2] ? '#b59f3b' : '#787c7e'"
-                      @keydown.enter.prevent="searchSimple"
-                      v-model="modeSimple.negativeIndexStringsArray[index][index2]"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <p class="text-center"><small>ハズレの文字</small></p>
-              <v-text-field label="含まれない文字列を入力" v-model="modeSimple.negativeString"
-                            @keydown.enter.prevent="searchSimple"></v-text-field>
-              <p class="text-center">
-                <v-btn color="primary" @click="searchSimple">検索</v-btn>
-                <v-btn @click="clearSimple">入力をクリア</v-btn>
+              <template v-if="csvDataList.length >= 2">
+                <v-row>
+                  <v-col
+                      v-for="(csvData, index) in csvDataList"
+                      v-bind:key="index"
+                      cols="6"
+                      sm="6"
+                      md="6"
+                  >
+                    name: {{ files[index].name }}
+                    <v-radio-group
+                        v-model="selectedHeaderKey[index]"
+                        @change="applyHeaderKeyChanges"
+                        column
+                    >
+                      <v-radio
+                          v-for="header in csvDataHeaders[index]"
+                          v-bind:key="header"
+                          :label="header"
+                          color="indigo"
+                          :value="header"
+                      ></v-radio>
+                    </v-radio-group>
+                  </v-col>
+                </v-row>
+              </template>
+              <p class="text-center" v-if="readyForAggregate">
+                <v-checkbox
+                    v-model="encodeToSJIS"
+                    label="Encode UTF to SJIS"
+                ></v-checkbox>
+
+                <v-btn color="primary" @click="aggregate">AGGREGATE AND DOWNLOAD CSV</v-btn>
               </p>
-            </template>
-            <template v-else-if="item==='正規表現を使う'">
-              <v-text-field label="正規表現で検索文字列を入力" v-model="modeRegex.searchString"
-                            @keydown.enter.prevent="searchRegex"></v-text-field>
-              <v-text-field type="number" label="文字数(0で無視)" v-model="modeRegex.stringNumber"
-                            @keydown.enter.prevent="searchRegex"></v-text-field>
-              <v-btn @click="searchRegex">検索</v-btn>
+            </v-container>
+            <template v-else-if="item===searchItems[1]">
+              <ul>
+                <li>
+                  Aggreagte Data From two CSV files.
+                </li>
+              </ul>
             </template>
           </v-tab-item>
         </v-tabs-items>
       </v-card>
 
 
-      <v-card
-          elevation="2"
-          id="result-card"
-      >
-        <h3>検索結果</h3>
-        <p v-text="resultMessage"></p>
-        <v-simple-table dense>
-          <template v-slot:default>
-            <thead>
-            <tr>
-              <th class="text-left">
-                語彙
-              </th>
-              <th class="text-left">
-                一般名
-              </th>
-              <th class="text-left">
-                ふりがな
-              </th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr
-                v-for="item in results"
-                :key="item.word"
-            >
-              <td>{{ item.word }}</td>
-              <td>{{ item.common }}</td>
-              <td>{{ item.kana }}</td>
-            </tr>
-            </tbody>
-          </template>
-        </v-simple-table>
-      </v-card>
+      <!--      <v-card-->
+      <!--          elevation="2"-->
+      <!--          id="result-card"-->
+      <!--      >-->
+      <!--        <h3>RESULT</h3>-->
+      <!--        <v-simple-table dense>-->
+      <!--          <template v-slot:default>-->
+      <!--            <thead>-->
+      <!--            <tr>-->
+      <!--              <th class="text-left">-->
+      <!--                語彙-->
+      <!--              </th>-->
+      <!--              <th class="text-left">-->
+      <!--                一般名-->
+      <!--              </th>-->
+      <!--              <th class="text-left">-->
+      <!--                ふりがな-->
+      <!--              </th>-->
+      <!--            </tr>-->
+      <!--            </thead>-->
+      <!--            <tbody>-->
+      <!--            <tr-->
+      <!--                v-for="item in results"-->
+      <!--                :key="item.word"-->
+      <!--            >-->
+      <!--              <td>{{ item.word }}</td>-->
+      <!--              <td>{{ item.common }}</td>-->
+      <!--              <td>{{ item.kana }}</td>-->
+      <!--            </tr>-->
+      <!--            </tbody>-->
+      <!--          </template>-->
+      <!--        </v-simple-table>-->
+      <!--      </v-card>-->
       <v-btn
           v-scroll="onScroll"
           v-show="fab"
@@ -141,108 +156,164 @@
 
 <script>
 require('@/assets/sass/custom.scss');
-import wordsJson from '@/assets/json/words.json';
+import Vue from 'vue'
+import VuePapaParse from 'vue-papa-parse'
+import encoding from 'encoding-japanese';
+
+Vue.use(VuePapaParse)
 
 export default {
   name: 'App',
   components: {},
   data() {
-    let arr = [];
-    let simpleStringNumber = 5;
-    arr.length = simpleStringNumber;
     return {
-      wordsJson: wordsJson,
-      results: [],
-      resultMessage: "",
       fab: false,
       searchTab: null,
       searchItems: [
-        'かんたん検索', '正規表現を使う',
+        'Inport CSV', 'readme',
       ],
-      modeSimple: {
-        stringNumber: simpleStringNumber,
-        specificIndexStrings: arr,
-        negativeIndexStringsArray: [arr.concat(), arr.concat()],
-        negativeString: "",
-      },
-      modeRegex: {
-        stringNumber: 0,
-        searchString: "て...い",
-      }
+      csvDataList: [],
+      csvDataHeaders: [],
+      selectedHeaderKey: {},
+      csvReadCompleted: false,
+      readyForAggregate: false,
+      encodeToSJIS: false,
+      files: [],
+      isDragging: false,
+      dragCount: 0
     }
   },
   methods: {
-    simpleStringNumberChanged() {
-      let arr = [];
-      arr.length = this.modeSimple.stringNumber;
-      this.modeSimple.specificIndexStrings = arr;
-      this.modeSimple.negativeIndexStringsArray = [arr.concat(), arr.concat()]
-    },
-    clearSimple() {
-      // 入力文字をクリア
-      let arr = [];
-      arr.length = this.modeSimple.stringNumber;
-      this.modeSimple.specificIndexStrings = arr;
-      this.modeSimple.negativeIndexStringsArray = [arr.concat(), arr.concat()]
-      this.modeSimple.negativeString = "";
-    },
-    searchSimple() {
-      // build regex string
-      let patternString = "";
-      let specificIndexPattern = "";
-      for (let i = 0; i < this.modeSimple.specificIndexStrings.length; i++) {
-        specificIndexPattern += this.modeSimple.specificIndexStrings[i] &&
-        this.modeSimple.specificIndexStrings[i].length === 1 ? this.modeSimple.specificIndexStrings[i] : ".";
-      }
-      patternString += "(?=" + specificIndexPattern + ")"
-
-      // negativeIndexStrings
-      this.modeSimple.negativeIndexStringsArray.forEach(nIStrings => {
-        for (let i = 0; i < nIStrings.length; i++) {
-          if (nIStrings[i] && nIStrings[i].length === 1) {
-            // その位置には存在しない
-            patternString += "(?!" + ".".repeat(i) + nIStrings[i] + ".".repeat(nIStrings.length - (i + 1)) + ")";
-            // ただしどこかに存在する
-            patternString += "(?=.*" + nIStrings[i] + ")"
-          }
-        }
-      });
-
-      //negativeString
-      if (this.modeSimple.negativeString.length > 0) {
-        patternString += "(?!.*[" + this.modeSimple.negativeString + "])";
-      }
-
-      console.log('patternString: ' + patternString);
-      this.execSearch(this.modeSimple.stringNumber, new RegExp(patternString, "g"));
-    },
-    searchRegex() {
-      this.execSearch(this.modeRegex.stringNumber, new RegExp(this.modeRegex.searchString, "g"));
-    },
-    execSearch(stringNumber, pattern) {
-      let results = [];
-      this.wordsJson.words.forEach(word => {
-        if ((parseInt(stringNumber) === 0 || word[2].length === parseInt(stringNumber)) && pattern.test(word[2])) {
-          results.push({
-            "word": word[0],
-            "common": word[1],
-            "kana": word[2]
-          })
-        }
-      })
-      this.resultMessage = "検索完了。" + this.wordsJson.words.length + "単語中" + results.length + "単語がマッチしました。";
-      this.results = results;
-      this.$nextTick(function () {
-        document.querySelector('#result-card').scrollIntoView({
-          behavior: 'smooth',
-          inline: 'nearest',
-        });
-      })
-    },
     onScroll(e) {
       if (typeof window === 'undefined') return
       const top = window.scrollY || e.target.scrollTop || 0
       this.fab = top > 20
+    },
+    onDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.isDragging = false;
+      const _files = e.dataTransfer.files;
+      for (const file in _files) {
+        if (!isNaN(file)) {
+          //filesはファイル以外のデータが入っており、ファイルの場合のみキー名が数字になるため
+          this.files.push(_files[file]);
+        }
+      }
+      this.applyChanges();
+    },
+
+    onDragEnter(e) {
+      e.preventDefault();
+      this.isDragging = true;
+      this.dragCount++;
+    },
+
+    onDragLeave(e) {
+      e.preventDefault();
+      this.dragCount--;
+      if (this.dragCount <= 0) {
+        this.isDragging = false;
+      }
+    },
+    applyChanges() {
+      console.log("files changed.");
+      this.readyForAggregate = false;
+      this.csvReadCompleted = false;
+      this.csvDataList = [];
+      let _this = this;
+      let fileCount = this.files.length;
+      let completeCount = 0;
+      this.files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.$papa.parse(reader.result, {
+            header: true,
+            complete: function (results) {
+              _this.csvDataList.push(results.data);
+              if (fileCount <= ++completeCount) {
+                _this.readCompleted();
+              }
+            },
+          });
+        };
+        reader.readAsText(file);
+        console.log(file);
+      })
+    },
+    readCompleted() {
+      this.csvReadCompleted = true;
+      this.csvDataHeaders = [];
+      this.csvDataList.forEach(csvData => {
+        this.csvDataHeaders.push(Object.keys(csvData[0]));
+      })
+    },
+    applyHeaderKeyChanges() {
+      if (this.csvDataHeaders.length !== Object.keys(this.selectedHeaderKey).length) {
+        this.readyForAggregate = false;
+        return
+      }
+      let keysValid = true;
+      Object.keys(this.selectedHeaderKey).forEach(key => {
+        if (!this.selectedHeaderKey[key]) {
+          keysValid = false;
+        }
+      })
+      this.readyForAggregate = keysValid;
+    },
+    aggregate() {
+      // console.log(this.csvDataList)
+      let json = this.csvDataList[0];
+      json.map(row => {
+        let matched = this.csvDataList[1].filter(row2 => {
+          console.log('row1 key: ' + row[this.selectedHeaderKey[0]] + ', row2 key: ' + row2[this.selectedHeaderKey[1]])
+          return row2[this.selectedHeaderKey[1]] === row[this.selectedHeaderKey[0]]
+        })
+        if (matched.length === 0) {
+          console.log('not matched');
+          return row;
+        } else {
+          console.log('matched');
+          return Object.assign(row, matched[0]);
+        }
+
+      })
+      const config = {
+        delimiter: ',', // 区切り文字
+        header: true, // キーをヘッダーとして扱う
+        newline: '\r\n', // 改行
+      };
+
+      const delimiterString = this.$papa.unparse(json, config);
+      const strArray = encoding.stringToCode(delimiterString);
+      const convertedArray = this.encodeToSJIS ? encoding.convert(strArray, 'SJIS', 'UNICODE') :
+          encoding.convert(strArray, 'UTF8', 'UNICODE') ;
+      const UintArray = new Uint8Array(convertedArray);
+      const blob = new Blob([UintArray], {type: 'text/csv'});
+      const aTag = document.createElement('a');
+
+      aTag.download = 'result.csv';
+
+      if (window.navigator.msSaveBlob) {
+        // for IE
+        window.navigator.msSaveBlob(blob, aTag.download);
+      } else if (window.URL && window.URL.createObjectURL) {
+        // for Firefox
+        aTag.href = window.URL.createObjectURL(blob);
+        document.body.appendChild(aTag);
+        aTag.click();
+        document.body.removeChild(aTag);
+      } else if (window.webkitURL && window.webkitURL.createObject) {
+        // for Chrome
+        aTag.href = (window.URL || window.webkitURL).createObjectURL(blob);
+        aTag.click();
+      } else {
+        // for Safari
+        window.open(
+            `data:type/csv;base64,${window.Base64.encode(this.state.content)}`,
+            '_blank'
+        );
+      }
     }
   }
 };

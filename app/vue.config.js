@@ -1,5 +1,5 @@
 module.exports = {
-  publicPath: '/wordle-ja-cheat/',
+  publicPath: '/easy-csv-aggregator/',
   transpileDependencies: [
     'vuetify'
   ],

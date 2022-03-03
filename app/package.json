@@ -1,5 +1,5 @@
 {
-  "name": "wordle-ja-cheat",
+  "name": "easy-csv-aggregator",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,9 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "d3": "^7.3.0",
+    "encoding-japanese": "^1.0.30",
     "vue": "^2.6.11",
+    "vue-papa-parse": "^3.0.4",
     "vuetify": "^2.4.0"
   },
   "devDependencies": {

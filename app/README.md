@@ -1,4 +1,4 @@
-# wordle-ja-cheat
+# easy-csv-aggregator
 
 ## Project setup
 ```

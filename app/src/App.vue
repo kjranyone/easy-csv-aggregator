@@ -197,7 +197,9 @@ export default {
       this.files.forEach(file => {
         const reader = new FileReader();
         reader.onload = () => {
-          this.$papa.parse(reader.result, {
+          let suggested = encoding.detect(reader.result);
+          const unicodeString = encoding.convert(reader.result, 'UNICODE', suggested);
+          this.$papa.parse(unicodeString, {
             header: true,
             complete: function (results) {
               _this.csvDataList.push(results.data);
@@ -207,7 +209,7 @@ export default {
             },
           });
         };
-        reader.readAsText(file);
+        reader.readAsBinaryString(file);
       })
     },
     readCompleted() {

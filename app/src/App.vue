@@ -58,6 +58,7 @@
                 </v-file-input>
               </v-row>
               <template v-if="csvDataList.length >= 2">
+                <h3>Select Join Key</h3>
                 <v-row>
                   <v-col
                       v-for="(csvData, index) in csvDataList"
@@ -83,14 +84,18 @@
                   </v-col>
                 </v-row>
               </template>
-              <p class="text-center" v-if="readyForAggregate">
-                <v-checkbox
-                    v-model="encodeToSJIS"
-                    label="Encode UTF to SJIS"
-                ></v-checkbox>
-
-                <v-btn color="primary" @click="aggregate">AGGREGATE AND DOWNLOAD CSV</v-btn>
-              </p>
+              <template v-if="readyForAggregate">
+                <h3>Options</h3>
+                <p class="text-center">
+                  <v-checkbox
+                      v-model="encodeToSJIS"
+                      label="Encode UTF to SJIS"
+                  ></v-checkbox>
+                </p>
+                <p>
+                  <v-btn color="primary" @click="aggregate">AGGREGATE AND DOWNLOAD CSV</v-btn>
+                </p>
+              </template>
             </v-container>
             <template v-else-if="item===searchItems[1]">
               <ul>
@@ -102,41 +107,6 @@
           </v-tab-item>
         </v-tabs-items>
       </v-card>
-
-
-      <!--      <v-card-->
-      <!--          elevation="2"-->
-      <!--          id="result-card"-->
-      <!--      >-->
-      <!--        <h3>RESULT</h3>-->
-      <!--        <v-simple-table dense>-->
-      <!--          <template v-slot:default>-->
-      <!--            <thead>-->
-      <!--            <tr>-->
-      <!--              <th class="text-left">-->
-      <!--                語彙-->
-      <!--              </th>-->
-      <!--              <th class="text-left">-->
-      <!--                一般名-->
-      <!--              </th>-->
-      <!--              <th class="text-left">-->
-      <!--                ふりがな-->
-      <!--              </th>-->
-      <!--            </tr>-->
-      <!--            </thead>-->
-      <!--            <tbody>-->
-      <!--            <tr-->
-      <!--                v-for="item in results"-->
-      <!--                :key="item.word"-->
-      <!--            >-->
-      <!--              <td>{{ item.word }}</td>-->
-      <!--              <td>{{ item.common }}</td>-->
-      <!--              <td>{{ item.kana }}</td>-->
-      <!--            </tr>-->
-      <!--            </tbody>-->
-      <!--          </template>-->
-      <!--        </v-simple-table>-->
-      <!--      </v-card>-->
       <v-btn
           v-scroll="onScroll"
           v-show="fab"
@@ -262,7 +232,6 @@ export default {
       this.readyForAggregate = keysValid;
     },
     aggregate() {
-      // console.log(this.csvDataList)
       let json = this.csvDataList[0];
       json.map(row => {
         let matched = this.csvDataList[1].filter(row2 => {
@@ -270,10 +239,8 @@ export default {
           return row2[this.selectedHeaderKey[1]] === row[this.selectedHeaderKey[0]]
         })
         if (matched.length === 0) {
-          console.log('not matched');
           return row;
         } else {
-          console.log('matched');
           return Object.assign(row, matched[0]);
         }
 
@@ -287,12 +254,12 @@ export default {
       const delimiterString = this.$papa.unparse(json, config);
       const strArray = encoding.stringToCode(delimiterString);
       const convertedArray = this.encodeToSJIS ? encoding.convert(strArray, 'SJIS', 'UNICODE') :
-          encoding.convert(strArray, 'UTF8', 'UNICODE') ;
+          encoding.convert(strArray, 'UTF8', 'UNICODE');
       const UintArray = new Uint8Array(convertedArray);
       const blob = new Blob([UintArray], {type: 'text/csv'});
       const aTag = document.createElement('a');
 
-      aTag.download = 'result.csv';
+      aTag.download = this.encodeToSJIS ? 'result_sjis.csv' : 'result.csv';
 
       if (window.navigator.msSaveBlob) {
         // for IE

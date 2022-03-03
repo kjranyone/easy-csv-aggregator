@@ -208,7 +208,6 @@ export default {
           });
         };
         reader.readAsText(file);
-        console.log(file);
       })
     },
     readCompleted() {
